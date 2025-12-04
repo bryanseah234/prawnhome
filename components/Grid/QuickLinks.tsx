@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Card } from '../UI/Card';
 import { QUICK_LINKS } from '../../constants';
@@ -18,7 +19,7 @@ export const QuickLinks: React.FC = () => {
             className={`
                 flex-grow flex items-center justify-between px-6 py-4
                 border-b-2 border-black last:border-b-0
-                hover:bg-black hover:text-white dark:hover:bg-prawn
+                hover:bg-prawn hover:text-black
                 transition-all duration-200 group
             `}
           >

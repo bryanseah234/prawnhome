@@ -41,8 +41,16 @@ export const WeatherQuote: React.FC = () => {
       return "🌧️";
   };
 
+  const handleClick = () => {
+    window.open("https://www.nea.gov.sg/weather/rain-areas", "_blank");
+  };
+
   return (
-    <Card colSpan="md:col-span-1" className="flex flex-col justify-center items-center text-center min-h-[200px]">
+    <Card 
+        colSpan="md:col-span-1" 
+        className="flex flex-col justify-center items-center text-center min-h-[200px] cursor-pointer hover:bg-gray-50 dark:hover:bg-[#222] transition-colors"
+        onClick={handleClick}
+    >
        <div className="mb-4 flex flex-col items-center justify-center h-full">
            {weather ? (
                <div className="text-5xl font-bold flex flex-col gap-2 items-center">

@@ -1,7 +1,12 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Card } from '../UI/Card';
 
-export const EyeWidget: React.FC = () => {
+interface EyeWidgetProps {
+  isActive?: boolean;
+}
+
+export const EyeWidget: React.FC<EyeWidgetProps> = ({ isActive = false }) => {
   const eyeRef = useRef<HTMLDivElement>(null);
   const [pupilPos, setPupilPos] = useState({ x: 0, y: 0 });
 
@@ -34,12 +39,23 @@ export const EyeWidget: React.FC = () => {
   }, []);
 
   return (
-    <Card className="bg-prawn text-black flex items-center justify-center min-h-[150px]">
+    <Card className={`flex items-center justify-center min-h-[150px] transition-colors duration-500 ${isActive ? 'bg-black' : 'bg-prawn'}`}>
         <div ref={eyeRef} className="relative w-24 h-24 bg-white border-4 border-black rounded-full flex items-center justify-center overflow-hidden">
-            <div 
-                className="w-8 h-8 bg-black rounded-full"
+            <motion.div 
+                className="w-8 h-8 rounded-full"
                 style={{
-                    transform: `translate(${pupilPos.x}px, ${pupilPos.y}px)`
+                    x: pupilPos.x,
+                    y: pupilPos.y
+                }}
+                animate={{
+                    backgroundColor: isActive ? ["#000000", "#FF4500", "#000000"] : "#000000"
+                }}
+                transition={{
+                    backgroundColor: {
+                        duration: 2,
+                        repeat: Infinity,
+                        ease: "easeInOut"
+                    }
                 }}
             />
         </div>

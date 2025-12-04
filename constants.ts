@@ -1,3 +1,4 @@
+
 export const PRAWN_QUOTES = [
   "Keep swimming.",
   "Don't be salty.",
@@ -10,23 +11,15 @@ export const PRAWN_QUOTES = [
 ];
 
 export const QUICK_LINKS = [
-  { name: "ChatGPT", url: "https://chat.openai.com" },
-  { name: "Gmail", url: "https://mail.google.com" },
-  { name: "GitHub", url: "https://github.com" },
-  { name: "Vercel", url: "https://vercel.com" },
-  { name: "YouTube", url: "https://youtube.com" },
+  { name: "Feeds", url: "https://prawnfeeds.hong-yi.me" },
+  { name: "Projects", url: "https://prawnprojects.hong-yi.me" },
+  { name: "Website", url: "https://hong-yi.me" },
+  { name: "Email", url: "mailto:hello@hong-yi.me" },
+  { name: "Surprise", url: "https://prawnsurprise.hong-yi.me" },
 ];
 
 export const EMOJI_POOL = [
   "🦐", "⭐", "💖", "🌊", "🍙", "🚀", "🪐", "👾", "💾", "💿", 
   "🔮", "🧿", "🩹", "🧬", "🧸", "🎀", "💣", "🔥", "🧊", "🌶️",
   "🍄", "🌵", "🛸", "🗿", "⚓", "🧭", "🌋", "🍡", "🍣", "🛹"
-];
-
-export const TRINKET_POSITIONS = [
-  { id: 1, initialX: 10, initialY: 20 },
-  { id: 2, initialX: 70, initialY: 15 },
-  { id: 3, initialX: 85, initialY: 60 },
-  { id: 4, initialX: 15, initialY: 70 },
-  { id: 5, initialX: 40, initialY: 80 },
 ];

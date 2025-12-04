@@ -5,9 +5,10 @@ interface CardProps {
   children: React.ReactNode;
   className?: string;
   colSpan?: string; // Tailwind grid col span class
+  onClick?: () => void;
 }
 
-export const Card: React.FC<CardProps> = ({ children, className = '', colSpan = 'col-span-1' }) => {
+export const Card: React.FC<CardProps> = ({ children, className = '', colSpan = 'col-span-1', onClick }) => {
   return (
     <motion.div
       className={`
@@ -19,6 +20,7 @@ export const Card: React.FC<CardProps> = ({ children, className = '', colSpan = 
         ${colSpan}
         ${className}
       `}
+      onClick={onClick}
       drag
       dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
       dragElastic={0.2}
