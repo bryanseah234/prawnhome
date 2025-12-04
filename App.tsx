@@ -13,7 +13,14 @@ export const ThemeContext = React.createContext<ThemeContextType>({
 });
 
 const App: React.FC = () => {
-  const [theme, setTheme] = useState<Theme>('light');
+  // Initialize theme based on system preference
+  const [theme, setTheme] = useState<Theme>(() => {
+    if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      return 'dark';
+    }
+    return 'light';
+  });
+
   const { scrollY } = useScroll();
 
   // Scroll Transformations for Hero
@@ -22,6 +29,18 @@ const App: React.FC = () => {
   const scale = useTransform(scrollY, [0, 500], [1, 0.9]);
   const blur = useTransform(scrollY, [0, 500], ["blur(0px)", "blur(10px)"]);
   const y = useTransform(scrollY, [0, 500], [0, 100]); 
+
+  // Listen for system theme changes (e.g. OS switches to dark mode automatically)
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    
+    const handleChange = (e: MediaQueryListEvent) => {
+      setTheme(e.matches ? 'dark' : 'light');
+    };
+
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
+  }, []);
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'));

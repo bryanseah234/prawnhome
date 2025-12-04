@@ -12,10 +12,10 @@ export const MarqueeBar: React.FC = () => {
         const topIdsRes = await fetch('https://hacker-news.firebaseio.com/v0/topstories.json');
         const topIds = await topIdsRes.json();
         
-        // Take top 10
-        const top10Ids = topIds.slice(0, 10);
+        // Take top 30
+        const topIdsSlice = topIds.slice(0, 30);
         
-        const storyPromises = top10Ids.map((id: number) => 
+        const storyPromises = topIdsSlice.map((id: number) => 
           fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then(res => res.json())
         );
         
@@ -40,11 +40,11 @@ export const MarqueeBar: React.FC = () => {
       
       <motion.div 
         className="flex whitespace-nowrap"
-        animate={{ x: [0, -2000] }}
+        animate={{ x: [0, -4000] }}
         transition={{ 
           repeat: Infinity, 
           ease: "linear", 
-          duration: 40,
+          duration: 120, // Slower for more content
         }}
         whileHover={{ animationPlayState: 'paused' }}
       >

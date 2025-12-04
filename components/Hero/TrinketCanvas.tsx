@@ -1,11 +1,11 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { EMOJI_POOL } from '../../constants';
 
 // Physics configuration
 const PARTICLE_COUNT = 8; // Keep between 6-10 for performance
-const BOUNCE_DAMPING = 0.9; // Energy kept after wall bounce (1 = perfect elastic)
-const DRAG_FRICTION = 0.95; // Air resistance
-const RADIUS = 40; // Approximate radius of the emoji (visual size is bigger, hitbox is smaller)
+const BOUNCE_DAMPING = 0.8; // Lose some energy when hitting walls
+const FRICTION = 0.995; // Air resistance/Surface friction (approaches 0 over time)
+const RADIUS = 40; 
 
 interface Particle {
   id: number;
@@ -23,12 +23,16 @@ interface Particle {
 export const TrinketCanvas: React.FC = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<number>();
-  const particles = useRef<Particle[]>([]);
+  
+  // separate state for rendering (static data) vs refs for physics (mutable high-freq data)
+  const [renderableParticles, setRenderableParticles] = useState<Particle[]>([]);
+  const physicsParticles = useRef<Particle[]>([]);
+  
   const mouseRef = useRef({ x: 0, y: 0, lastX: 0, lastY: 0, down: false, dragId: -1 });
 
   // Initialize Particles
   useEffect(() => {
-    // Generate particles only once
+    // Generate particles
     const newParticles: Particle[] = [];
     const width = window.innerWidth;
     const height = window.innerHeight;
@@ -49,7 +53,11 @@ export const TrinketCanvas: React.FC = () => {
         element: null
       });
     }
-    particles.current = newParticles;
+    
+    // Set ref for physics loop
+    physicsParticles.current = newParticles;
+    // Set state to trigger React render
+    setRenderableParticles(newParticles);
 
     // Start Loop
     requestRef.current = requestAnimationFrame(animate);
@@ -62,9 +70,9 @@ export const TrinketCanvas: React.FC = () => {
   // The Physics Loop
   const animate = () => {
     const width = window.innerWidth;
-    const height = window.innerHeight; // Hero is 100vh
+    const height = window.innerHeight; 
     
-    particles.current.forEach((p, index) => {
+    physicsParticles.current.forEach((p, index) => {
       if (!p.element) return;
 
       if (p.isDragging) {
@@ -84,28 +92,38 @@ export const TrinketCanvas: React.FC = () => {
         p.y += p.vy;
         p.rotation += p.vRotation;
 
+        // Apply Friction (Slow down over time)
+        p.vx *= FRICTION;
+        p.vy *= FRICTION;
+        p.vRotation *= FRICTION;
+
+        // Stop completely if very slow (optimization)
+        if (Math.abs(p.vx) < 0.01) p.vx = 0;
+        if (Math.abs(p.vy) < 0.01) p.vy = 0;
+        if (Math.abs(p.vRotation) < 0.01) p.vRotation = 0;
+
         // Wall Collisions (DVD Logo Style)
         // Left/Right
         if (p.x < RADIUS) {
           p.x = RADIUS;
-          p.vx *= -1;
+          p.vx *= -1 * BOUNCE_DAMPING;
         } else if (p.x > width - RADIUS) {
           p.x = width - RADIUS;
-          p.vx *= -1;
+          p.vx *= -1 * BOUNCE_DAMPING;
         }
 
         // Top/Bottom
         if (p.y < RADIUS) {
           p.y = RADIUS;
-          p.vy *= -1;
+          p.vy *= -1 * BOUNCE_DAMPING;
         } else if (p.y > height - RADIUS) {
           p.y = height - RADIUS;
-          p.vy *= -1;
+          p.vy *= -1 * BOUNCE_DAMPING;
         }
 
         // Object Collision (Circle vs Circle)
-        for (let j = index + 1; j < particles.current.length; j++) {
-          const p2 = particles.current[j];
+        for (let j = index + 1; j < physicsParticles.current.length; j++) {
+          const p2 = physicsParticles.current[j];
           if (p2.isDragging) continue;
 
           const dx = p2.x - p.x;
@@ -128,7 +146,6 @@ export const TrinketCanvas: React.FC = () => {
             p2.y += moveY;
 
             // 2. Bounce (Swap Velocities - simple elastic approximation for equal mass)
-            // Calculate normal and tangent vectors
             const nx = dx / distance;
             const ny = dy / distance;
             
@@ -140,10 +157,10 @@ export const TrinketCanvas: React.FC = () => {
             if (p1 > 0) {
                 // Already moving apart
             } else {
-                p.vx -= p1 * nx;
-                p.vy -= p1 * ny;
-                p2.vx += p1 * nx;
-                p2.vy += p1 * ny;
+                p.vx -= p1 * nx * BOUNCE_DAMPING;
+                p.vy -= p1 * ny * BOUNCE_DAMPING;
+                p2.vx += p1 * nx * BOUNCE_DAMPING;
+                p2.vy += p1 * ny * BOUNCE_DAMPING;
                 
                 // Add some spin on collision
                 p.vRotation += (Math.random() - 0.5) * 5;
@@ -175,7 +192,7 @@ export const TrinketCanvas: React.FC = () => {
     mouseRef.current.lastX = clientX;
     mouseRef.current.lastY = clientY;
     
-    const p = particles.current.find(p => p.id === id);
+    const p = physicsParticles.current.find(p => p.id === id);
     if (p) p.isDragging = true;
   };
 
@@ -190,7 +207,7 @@ export const TrinketCanvas: React.FC = () => {
 
   const handleMouseUp = () => {
     if (mouseRef.current.dragId !== -1) {
-      const p = particles.current.find(p => p.id === mouseRef.current.dragId);
+      const p = physicsParticles.current.find(p => p.id === mouseRef.current.dragId);
       if (p) p.isDragging = false;
       mouseRef.current.dragId = -1;
     }
@@ -217,10 +234,10 @@ export const TrinketCanvas: React.FC = () => {
         className="absolute inset-0 overflow-hidden pointer-events-none z-10"
         style={{ willChange: 'transform' }}
     >
-      {particles.current.map((p) => (
+      {renderableParticles.map((p) => (
         <div
           key={p.id}
-          ref={(el) => { if (el && particles.current[p.id]) particles.current[p.id].element = el; }}
+          ref={(el) => { if (el && physicsParticles.current[p.id]) physicsParticles.current[p.id].element = el; }}
           className="absolute left-0 top-0 text-6xl cursor-grab active:cursor-grabbing pointer-events-auto select-none touch-none"
           onMouseDown={(e) => handleMouseDown(e, p.id)}
           onTouchStart={(e) => handleMouseDown(e, p.id)}
