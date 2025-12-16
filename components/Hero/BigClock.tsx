@@ -1,8 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
 
-export const BigClock: React.FC = () => {
+interface BigClockProps {
+  onMinuteTick?: () => void;
+}
+
+export const BigClock: React.FC<BigClockProps> = ({ onMinuteTick }) => {
   const [time, setTime] = useState(new Date());
+  const lastMinuteRef = useRef(new Date().getMinutes());
   
   // Mouse parallax effect
   const x = useMotionValue(0);
@@ -15,9 +20,19 @@ export const BigClock: React.FC = () => {
   const rotateY = useTransform(mouseX, [-0.5, 0.5], ["-5deg", "5deg"]);
 
   useEffect(() => {
-    const timer = setInterval(() => setTime(new Date()), 1000);
+    const timer = setInterval(() => {
+      const now = new Date();
+      const currentMinute = now.getMinutes();
+      
+      if (currentMinute !== lastMinuteRef.current) {
+        lastMinuteRef.current = currentMinute;
+        if (onMinuteTick) onMinuteTick();
+      }
+      
+      setTime(now);
+    }, 1000);
     return () => clearInterval(timer);
-  }, []);
+  }, [onMinuteTick]);
 
   const handleMouseMove = (e: React.MouseEvent) => {
     const rect = e.currentTarget.getBoundingClientRect();

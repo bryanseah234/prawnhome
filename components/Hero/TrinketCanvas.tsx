@@ -21,15 +21,51 @@ interface Particle {
   element: HTMLDivElement | null;
 }
 
-export const TrinketCanvas: React.FC = () => {
+interface TrinketCanvasProps {
+  explodeTrigger?: number; // Timestamp or counter to trigger explosion
+}
+
+export const TrinketCanvas: React.FC<TrinketCanvasProps> = ({ explodeTrigger }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const requestRef = useRef<number>();
   
   // separate state for rendering (static data) vs refs for physics (mutable high-freq data)
   const [renderableParticles, setRenderableParticles] = useState<Particle[]>([]);
   const physicsParticles = useRef<Particle[]>([]);
+  const [ripple, setRipple] = useState<{ active: boolean, id: number }>({ active: false, id: 0 });
   
   const mouseRef = useRef({ x: 0, y: 0, lastX: 0, lastY: 0, down: false, dragId: -1 });
+
+  // Handle Explosion Trigger
+  useEffect(() => {
+    if (!explodeTrigger) return;
+
+    // Trigger visual ripple
+    setRipple({ active: true, id: explodeTrigger });
+    setTimeout(() => setRipple(prev => ({ ...prev, active: false })), 1000);
+
+    const centerX = window.innerWidth / 2;
+    const centerY = window.innerHeight / 2;
+    const explosionStrength = 25; // How hard to push
+
+    physicsParticles.current.forEach(p => {
+      if (!p.isDragging) {
+        // Calculate vector from center to particle
+        const dx = p.x - centerX;
+        const dy = p.y - centerY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        
+        // Normalize and apply force
+        // Add random variation to make it look organic
+        if (dist > 0.1) {
+          p.vx += (dx / dist) * explosionStrength + (Math.random() - 0.5) * 5;
+          p.vy += (dy / dist) * explosionStrength + (Math.random() - 0.5) * 5;
+          p.vRotation += (Math.random() - 0.5) * 30; // Spin them
+        }
+      }
+    });
+
+  }, [explodeTrigger]);
 
   // Initialize Particles
   useEffect(() => {
@@ -278,6 +314,15 @@ export const TrinketCanvas: React.FC = () => {
         className="absolute inset-0 overflow-hidden pointer-events-none z-10"
         style={{ willChange: 'transform' }}
     >
+      {/* Visual Ripple Effect */}
+      {ripple.active && (
+         <div 
+           key={ripple.id}
+           className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 rounded-full border-4 border-prawn opacity-0 animate-[ping_1s_ease-out_forwards]"
+           style={{ width: '10px', height: '10px' }}
+         />
+      )}
+
       {renderableParticles.map((p) => (
         <div
           key={p.id}

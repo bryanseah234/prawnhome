@@ -4,6 +4,7 @@ import { BigClock } from './components/Hero/BigClock';
 import { TrinketCanvas } from './components/Hero/TrinketCanvas';
 import { MarqueeBar } from './components/Marquee/MarqueeBar';
 import { BentoGrid } from './components/Grid/BentoGrid';
+import { CustomCursor } from './components/UI/CustomCursor';
 import { ThemeContextType, Theme } from './types';
 
 // Theme Context
@@ -20,6 +21,9 @@ const App: React.FC = () => {
     }
     return 'light';
   });
+
+  // State to trigger physics explosion on time change
+  const [timePulse, setTimePulse] = useState(0);
 
   const { scrollY } = useScroll();
 
@@ -55,14 +59,21 @@ const App: React.FC = () => {
     }
   }, [theme]);
 
+  const handleMinuteTick = () => {
+    // Update the pulse trigger with a new timestamp
+    setTimePulse(Date.now());
+  };
+
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
       <div className={`min-h-screen font-mono transition-colors duration-300 ${theme === 'dark' ? 'bg-[#111] text-[#E0E0E0]' : 'bg-gray-50 text-black'}`}>
         
+        <CustomCursor />
+
         {/* Toggle Button - Fixed Top Right */}
         <button 
             onClick={toggleTheme}
-            className="fixed top-4 right-4 z-50 p-2 border-2 border-black dark:border-white bg-white dark:bg-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:translate-y-1 hover:shadow-none transition-all"
+            className="fixed top-4 right-4 z-50 p-2 border-2 border-black dark:border-white bg-white dark:bg-black rounded-full shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] dark:shadow-[2px_2px_0px_0px_rgba(255,255,255,1)] hover:translate-y-1 hover:shadow-none transition-all cursor-none"
         >
             {theme === 'light' ? '🌙' : '☀️'}
         </button>
@@ -72,8 +83,8 @@ const App: React.FC = () => {
             style={{ opacity, scale, filter: blur, y }}
             className="fixed top-0 left-0 w-full h-[100vh] flex flex-col items-center justify-center z-0 pb-[60px]"
         >
-             <TrinketCanvas />
-             <BigClock />
+             <TrinketCanvas explodeTrigger={timePulse} />
+             <BigClock onMinuteTick={handleMinuteTick} />
         </motion.div>
 
         {/* Spacer - Pushes content down so Marquee sits at bottom initially */}
