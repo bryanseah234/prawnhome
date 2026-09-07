@@ -30,6 +30,7 @@ dist-ssr
 .vercel
 .env*
 
+
 # AI / editor dot directories (managed via sourcerepo)
 .*
 !.github/
