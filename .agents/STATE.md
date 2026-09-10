@@ -1,5 +1,10 @@
 # Agent State
 
+Portfolio upkeep — 2026-09-10:
+- Owner accepted the portfolio plan and production releases, superseding the earlier cleanup pause below.
+- Reproduced the widget polling again after 10 seconds in the built app. Implemented the accepted 30-second cadence, hidden-tab pauses, one request at a time, a 15-second request deadline, cleanup cancellation and bounded failure backoff.
+- The local one-second playback animation remains separate from network polling. The production build, source type check and synthetic browser regression pass: 30-second cadence, ten hidden minutes without polls, resume, no overlap and failure recovery. Build output is excluded from source type checking. Production validation is pending.
+
 Current task: phased cleanup for theprawnhome.
 
 Status:

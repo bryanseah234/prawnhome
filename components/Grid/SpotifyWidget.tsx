@@ -12,33 +12,63 @@ export const SpotifyWidget: React.FC = () => {
   const [mockProgress, setMockProgress] = useState(30);
 
   useEffect(() => {
-    // Poll for real data
+    const refreshMs = 30_000;
+    let active = true;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    let pending: AbortController | null = null;
+    let failures = 0;
+
     const fetchSpotify = async () => {
+      clearTimeout(timer);
+      if (!active || document.hidden || pending) return;
+
+      const controller = new AbortController();
+      pending = controller;
+      const deadline = setTimeout(() => controller.abort(), 15_000);
+      let succeeded = false;
       try {
-        const res = await fetch('/api/spotify');
-        if (res.ok) {
-          const json = await res.json();
-          // If we have an error (e.g. missing secrets), we treat it as null/mock
-          if (json.error) {
-            setData(null);
-            setPlaybackProgress(null);
-          } else {
-            setData(json);
-            setPlaybackProgress(typeof json.progress === 'number' ? json.progress : null);
+        const res = await fetch('/api/spotify', { signal: controller.signal });
+        if (!res.ok) throw new Error('Spotify is temporarily unavailable');
+        const json = await res.json();
+        if (json.error) throw new Error('Spotify is not configured');
+        succeeded = true;
+        if (active) {
+          setData(json);
+          setPlaybackProgress(
+            typeof json.progress === 'number' && Number.isFinite(json.progress) ? json.progress : null
+          );
+        }
+      } catch {
+        if (active) {
+          setData(null);
+          setPlaybackProgress(null);
+        }
+      } finally {
+        clearTimeout(deadline);
+        pending = null;
+        failures = succeeded ? 0 : Math.min(failures + 1, 2);
+        if (active) {
+          setLoading(false);
+          if (!document.hidden) {
+            timer = setTimeout(() => void fetchSpotify(), refreshMs * 2 ** failures);
           }
         }
-      } catch (e) {
-        // Fallback to mock on error
-        setData(null);
-        setPlaybackProgress(null);
-      } finally {
-        setLoading(false);
       }
     };
 
-    fetchSpotify();
-    const interval = setInterval(fetchSpotify, 10000); // Poll every 10s
-    return () => clearInterval(interval);
+    const onVisibilityChange = () => {
+      clearTimeout(timer);
+      if (!document.hidden) void fetchSpotify();
+    };
+
+    document.addEventListener('visibilitychange', onVisibilityChange);
+    void fetchSpotify();
+    return () => {
+      active = false;
+      clearTimeout(timer);
+      pending?.abort();
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+    };
   }, []);
 
   // Internal timer for smooth progress bar animation
